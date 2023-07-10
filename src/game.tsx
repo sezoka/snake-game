@@ -31,8 +31,8 @@ var field_height = 10;
 const colors = {
   [Cell.head]: "blue",
   [Cell.empty]: "black",
-  [Cell.tail]: "pink",
-  [Cell.apple]: "red",
+  [Cell.tail]: "blue",
+  [Cell.apple]: "#88DD50",
 };
 
 const offsets = {
@@ -45,8 +45,9 @@ const offsets = {
 export function Game(): React.ReactElement {
   const [snake, flush_snake] = use_mut(create_snake());
   const [apple, flush_apple] = use_mut<Vec2>(generate_apple(snake)!);
+  const [pause, set_pause] = React.useState(true);
 
-  const handle_change_direction: EventListener = (key: any) => {
+  const handle_key_press: EventListener = (key: any) => {
     switch (key.code) {
       case "ArrowUp":
         snake.dir = Direction.up;
@@ -60,16 +61,22 @@ export function Game(): React.ReactElement {
       case "ArrowDown":
         snake.dir = Direction.down;
         break;
+      case "Space":
+        set_pause(!pause);
     }
     flush_snake();
   };
 
   React.useEffect(() => {
-    document.body.addEventListener("keydown", handle_change_direction);
-    return () => document.body.removeEventListener("keydown", handle_change_direction);
-  }, []);
+    document.body.addEventListener("keydown", handle_key_press);
+    return () => document.body.removeEventListener("keydown", handle_key_press);
+  }, [pause]);
 
   const update = React.useCallback(() => {
+    if (pause) {
+      return;
+    }
+
     const head = snake.body[snake.head_idx];
     const offset = offsets[snake.dir];
 
@@ -91,25 +98,22 @@ export function Game(): React.ReactElement {
       snake.body[new_head_idx].y = snake.body[snake.head_idx].y;
       snake.body[new_head_idx].x += offset.x;
       snake.body[new_head_idx].y += offset.y;
-      if (snake.body[new_head_idx].x < 0)
-       snake.body[new_head_idx].x = field_width - 1; 
-      if (snake.body[new_head_idx].y < 0)
-       snake.body[new_head_idx].y = field_height - 1; 
-      if (field_height <= snake.body[new_head_idx].y)
-       snake.body[new_head_idx].y = 0; 
-      if (field_width <= snake.body[new_head_idx].x)
-       snake.body[new_head_idx].x = 0; 
+      if (snake.body[new_head_idx].x < 0) snake.body[new_head_idx].x = field_width - 1;
+      if (snake.body[new_head_idx].y < 0) snake.body[new_head_idx].y = field_height - 1;
+      if (field_height <= snake.body[new_head_idx].y) snake.body[new_head_idx].y = 0;
+      if (field_width <= snake.body[new_head_idx].x) snake.body[new_head_idx].x = 0;
 
       snake.head_idx = new_head_idx;
     }
 
     flush_snake();
-  }, []);
+  }, [pause]);
 
-  use_interval(update, 500);
+  use_interval(update, 200);
 
   const cells = [];
 
+  let tail_num = 0;
   for (let y = 0; y < field_height; y += 1) {
     for (let x = 0; x < field_width; x += 1) {
       let cell = Cell.empty;
@@ -123,6 +127,8 @@ export function Game(): React.ReactElement {
         for (let i = 0; i < snake.body.length; i += 1) {
           if (snake.body[i].x === x && snake.body[i].y === y) {
             cell = Cell.tail;
+            tail_num = i - snake.head_idx;
+            if (tail_num < 0) tail_num += snake.body.length;
           }
         }
       }
@@ -136,7 +142,13 @@ export function Game(): React.ReactElement {
             fontSize: "3rem",
             justifyContent: "center",
             alignItems: "center",
-            color: colors[cell],
+            color:
+              cell === Cell.tail
+                ? `rgb(${Math.max(50, Math.trunc(150 - tail_num * 3) % 200)}, 20, ${Math.max(
+                    100,
+                    Math.trunc(255 - tail_num * 3)
+                  )})`
+                : colors[cell],
           }}
           key={y * field_width + x}
         >
@@ -151,7 +163,7 @@ export function Game(): React.ReactElement {
       style={{
         minHeight: "100vh",
         width: "100%",
-        background: "gray",
+        background: "black",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -161,7 +173,7 @@ export function Game(): React.ReactElement {
         style={{
           width: field_width * 4 + "rem",
           height: field_height * 4 + "rem",
-          background: "#616161",
+          background: "#161616",
           display: "flex",
           flexWrap: "wrap",
         }}
@@ -216,17 +228,19 @@ function generate_apple(snake: Snake): Vec2 | null {
   const x_offset = Math.trunc(Math.random() * field_width);
   const y_offset = Math.trunc(Math.random() * field_height);
 
-  for (let x_start = 0; x_start < field_height; x_start += 1) {
-    for (let y_start = 0; y_start < field_width; y_start += 1) {
+  for (let y_start = 0; y_start < field_width; y_start += 1) {
+    next: for (let x_start = 0; x_start < field_height; x_start += 1) {
       const x = (x_start + x_offset) % field_width;
       const y = (y_start + y_offset) % field_height;
 
       for (let i = 0; i < snake.body.length; i += 1) {
         const pos = snake.body[i];
-        if (pos.x !== x || pos.y !== y) {
-          return { x, y };
+        if (pos.x === x && pos.y === y) {
+          continue next;
         }
       }
+
+      return { x, y };
     }
   }
 
