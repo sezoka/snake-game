@@ -25,8 +25,8 @@ type Snake = {
     head_idx: number;
 };
 
-var field_width = 30;
-var field_height = 10;
+var field_width = 50;
+var field_height = 50;
 
 const offsets = {
     [Direction.up]: { x: 0, y: -1 },
@@ -102,7 +102,7 @@ export function Game(): React.ReactElement {
         flush_snake();
     }, [pause]);
 
-    use_interval(update, 0);
+    use_interval(update, 100);
 
     let cell_size;
 
@@ -114,71 +114,109 @@ export function Game(): React.ReactElement {
 
     console.log(document.body.scrollWidth)
 
+    // const cells = [];
+    // let tail_num = 0;
+    // for (let y = 0; y < field_height; y += 1) {
+    //     for (let x = 0; x < field_width; x += 1) {
+    //         let cell = Cell.empty;
+
+    //         if (apple.x === x && apple.y === y) {
+    //             cell = Cell.apple;
+    //         }
+    //         if (snake.body[snake.head_idx].x === x && snake.body[snake.head_idx].y === y) {
+    //             cell = Cell.head;
+    //         } else {
+    //             for (let i = 0; i < snake.body.length; i += 1) {
+    //                 if (snake.body[i].x === x && snake.body[i].y === y) {
+    //                     cell = Cell.tail;
+    //                     tail_num = i - snake.head_idx;
+    //                     if (tail_num < 0) tail_num += snake.body.length;
+    //                     break;
+    //                 }
+    //             }
+    //         }
+
+    //         let background_color;
+    //         let shadow = "none";
+    //         let border = "none";
+    //         let z_index = 0;
+
+    //         switch (cell) {
+    //             case Cell.tail:
+    //                 background_color = `rgb(${Math.max(50, Math.trunc(150 - tail_num * 3) % 200)}, 20, ${Math.max(100, Math.trunc(255 - tail_num * 3))})`;
+    //                 break;
+    //             case Cell.empty:
+    //                 background_color = "#160016";
+    //                 break;
+    //             case Cell.head:
+    //                 background_color = "#e0efef";
+    //                 shadow = "#641e8f 0px 0px 24px 2px";
+    //                 z_index = 123;
+    //                 break;
+    //             case Cell.apple:
+    //                 background_color = "red";
+    //                 border = "1px solid white";
+    //                 shadow = "0px 0px 32px 4px #cd0d0d";
+    //                 z_index = 123;
+    //                 break;
+    //         }
+
+    //         cells.push(
+    //             <div
+    //                 style={{
+    //                     width: cell_size + "px",
+    //                     height: cell_size + "px",
+    //                     display: "flex",
+    //                     justifyContent: "center",
+    //                     alignItems: "center",
+    //                     backgroundColor: background_color,
+    //                     zIndex: z_index,
+    //                     border: border,
+    //                     boxShadow: shadow,
+    //                 }}
+    //                 key={y * field_width + x}
+    //             >
+    //             </div>
+    //         );
+    //     }
+    // }
+    //
+
     const cells = [];
-    let tail_num = 0;
-    for (let y = 0; y < field_height; y += 1) {
-        for (let x = 0; x < field_width; x += 1) {
-            let cell = Cell.empty;
 
-            if (apple.x === x && apple.y === y) {
-                cell = Cell.apple;
-            }
-            if (snake.body[snake.head_idx].x === x && snake.body[snake.head_idx].y === y) {
-                cell = Cell.head;
-            } else {
-                for (let i = 0; i < snake.body.length; i += 1) {
-                    if (snake.body[i].x === x && snake.body[i].y === y) {
-                        cell = Cell.tail;
-                        tail_num = i - snake.head_idx;
-                        if (tail_num < 0) tail_num += snake.body.length;
-                    }
-                }
-            }
+    for (let i = 0; i < snake.body.length; i += 1) {
+        const cell = snake.body[i];
+        // const is_head = i === snake.head_idx;
 
-            let background_color;
-            let shadow = "none";
-            let border = "none";
-            let z_index = 0;
-
-            switch (cell) {
-                case Cell.tail:
-                    background_color = `rgb(${Math.max(50, Math.trunc(150 - tail_num * 3) % 200)}, 20, ${Math.max(100, Math.trunc(255 - tail_num * 3))})`;
-                    break;
-                case Cell.empty:
-                    background_color = "#160016";
-                    break;
-                case Cell.head:
-                    background_color = "#e0efef";
-                    shadow = "#641e8f 0px 0px 24px 2px";
-                    z_index = 123;
-                    break;
-                case Cell.apple:
-                    background_color = "red";
-                    border = "1px solid white";
-                    shadow = "0px 0px 32px 4px #cd0d0d";
-                    z_index = 123;
-                    break;
-            }
-
-            cells.push(
-                <div
-                    style={{
-                        width: cell_size + "px",
-                        height: cell_size + "px",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        backgroundColor: background_color,
-                        zIndex: z_index,
-                        border: border,
-                        boxShadow: shadow,
-                    }}
-                    key={y * field_width + x}
-                >
-                </div>
-            );
-        }
+        cells.push(
+            <div
+                style={{
+                    width: cell_size,
+                    height: cell_size,
+                    position: "absolute",
+                    left: cell_size * cell.x,
+                    top: cell_size * cell.y,
+                    background: "red",
+                }}
+            >
+            </div>
+        );
     }
+
+        cells.push(
+            <div
+                style={{
+                    width: cell_size,
+                    height: cell_size,
+                    position: "absolute",
+                    left: cell_size * apple.x,
+                    top: cell_size * apple.y,
+                    background: "red",
+                }}
+            >
+            </div>
+        );
+
 
     return (
         <div
@@ -199,6 +237,7 @@ export function Game(): React.ReactElement {
                     flexWrap: "wrap",
                     boxSizing: "content-box",
                     border: "2px solid white",
+                    position: "relative",
                 }}
             >
                 {cells}
